@@ -4,9 +4,10 @@
  *
  * Live provider entitlement is authoritative for GPT-5.6 Sol access: local
  * usage planType is a ranking hint only and never denies a Sol request before
- * transport. Spark retains its existing local Pro-preference policy. This
- * module names those model policies and keeps the provider's deterministic
- * rejection wording in one place.
+ * transport. Spark retains its existing local filter that excludes non-Pro
+ * candidates whenever a confirmed Pro candidate exists. This module names
+ * those model policies and keeps the provider's deterministic rejection
+ * wording in one place.
  */
 
 export function requiresOpenAICodexProModel(provider: string, modelId: string | undefined): boolean {

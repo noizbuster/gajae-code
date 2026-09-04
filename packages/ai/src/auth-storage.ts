@@ -4948,11 +4948,12 @@ export class AuthStorage {
 			}),
 		);
 
-		// Spark keeps its historical Pro preference when a confirmed Pro candidate exists,
-		// but still falls back when no candidate is confirmed Pro. GPT-5.6 Sol treats local
-		// planType only as a ranking hint, so an unusable preferred Pro row can fall through
-		// to a provider-authorized Plus or grandfathered account. Provider-confirmed Sol
-		// entitlement failures are mapped to the actionable error in openai-codex-responses.
+		// Spark keeps its historical local filter: when a confirmed Pro candidate exists,
+		// non-Pro candidates are excluded; when none is confirmed Pro, they remain usable.
+		// GPT-5.6 Sol treats local planType only as a ranking hint, so an unusable preferred
+		// Pro row can fall through to a provider-authorized Plus or grandfathered account.
+		// Provider-confirmed Sol entitlement failures are mapped to the actionable error in
+		// openai-codex-responses.
 		const enforceProRequirement =
 			requiresProModel &&
 			!usesOpenAICodexProviderEntitlement(provider, options?.modelId) &&
