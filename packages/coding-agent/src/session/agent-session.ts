@@ -4458,22 +4458,19 @@ export class AgentSession {
 		});
 		this.#unregisterMoveAbortListener = this.sessionManager.registerMoveAbortListener(async move => {
 			const moveId = this.#coordinatorRescopeMoveId;
-			try {
-				if (moveId && !move.preserveRecoveryJournal) {
-					await clearCoordinatorRuntimeStateRescope(
-						{
-							sessionId: this.sessionId,
-							cwd: move.newCwd,
-							sessionFile: move.newSessionFile ?? null,
-						},
-						moveId,
-						move.previousCwd,
-					);
-				}
-			} finally {
-				this.#coordinatorRescopeMoveId = undefined;
-				this.#endCoordinatorRescopeBarrier();
-			}
+			if (!moveId) return;
+			if (move.preserveRecoveryJournal) return;
+			await clearCoordinatorRuntimeStateRescope(
+				{
+					sessionId: this.sessionId,
+					cwd: move.newCwd,
+					sessionFile: move.newSessionFile ?? null,
+				},
+				moveId,
+				move.previousCwd,
+			);
+			this.#coordinatorRescopeMoveId = undefined;
+			this.#endCoordinatorRescopeBarrier();
 		});
 		this.#unregisterMovePublicationListener = this.sessionManager.registerMovePublicationListener(async move => {
 			const moveId = this.#coordinatorRescopeMoveId;
@@ -4494,6 +4491,8 @@ export class AgentSession {
 		// fence refuses every later persist) and rebinds the postmortem finalizer, which
 		// otherwise keeps writing terminal state to the launch root's cwd/session file.
 		this.#unregisterAfterMoveListener = this.sessionManager.registerAfterMoveListener(async move => {
+			const moveId = this.#coordinatorRescopeMoveId;
+			if (!moveId) throw new Error("Coordinator rescope completion has no prepared move identity.");
 			try {
 				const relocated = await relocateCoordinatorRuntimeStateForRescope(
 					{
@@ -4511,13 +4510,13 @@ export class AgentSession {
 						cwd: move.newCwd,
 						sessionFile: this.sessionManager.getSessionFile() ?? null,
 					},
-					this.#coordinatorRescopeMoveId,
+					moveId,
 					move.previousCwd,
 				);
-			} finally {
-				this.#registerRuntimeStateFinalizer();
 				this.#coordinatorRescopeMoveId = undefined;
 				this.#endCoordinatorRescopeBarrier();
+			} finally {
+				this.#registerRuntimeStateFinalizer();
 			}
 		});
 		// Power assertions are taken per turn (see #beginInFlight); nothing acquired here.
