@@ -4948,11 +4948,11 @@ export class AuthStorage {
 			}),
 		);
 
-		// Skip the Pro-plan filter when no candidate is confirmed Pro, so users with only
-		// non-Pro accounts can still attempt requests (e.g. trial/grandfathered access).
-		// Live provider entitlement is authoritative: never reject before transport
-		// based on local usage planType. Provider-confirmed entitlement failures are
-		// mapped to the actionable error in openai-codex-responses.
+		// Spark keeps its historical Pro preference when a confirmed Pro candidate exists,
+		// but still falls back when no candidate is confirmed Pro. GPT-5.6 Sol treats local
+		// planType only as a ranking hint, so an unusable preferred Pro row can fall through
+		// to a provider-authorized Plus or grandfathered account. Provider-confirmed Sol
+		// entitlement failures are mapped to the actionable error in openai-codex-responses.
 		const enforceProRequirement =
 			requiresProModel &&
 			!usesOpenAICodexProviderEntitlement(provider, options?.modelId) &&
