@@ -26,7 +26,7 @@ import type {
 	UsageReport,
 } from "./usage";
 
-import { requiresOpenAICodexProModel } from "./utils/codex-entitlement";
+import { requiresOpenAICodexProModel, usesOpenAICodexProviderEntitlement } from "./utils/codex-entitlement";
 import { getOAuthApiKey, getOAuthProvider, refreshOAuthToken, resolveOAuthStorageProvider } from "./utils/oauth";
 import { loginDeepInfra } from "./utils/oauth/deepinfra";
 import { loginDeepSeek } from "./utils/oauth/deepseek";
@@ -4954,7 +4954,9 @@ export class AuthStorage {
 		// based on local usage planType. Provider-confirmed entitlement failures are
 		// mapped to the actionable error in openai-codex-responses.
 		const enforceProRequirement =
-			requiresProModel && candidates.some(candidate => hasOpenAICodexProPlan(candidate.usage));
+			requiresProModel &&
+			!usesOpenAICodexProviderEntitlement(provider, options?.modelId) &&
+			candidates.some(candidate => hasOpenAICodexProPlan(candidate.usage));
 
 		const fallback = candidates[0];
 

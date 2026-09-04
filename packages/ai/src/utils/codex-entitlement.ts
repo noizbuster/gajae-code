@@ -16,6 +16,10 @@ export function requiresOpenAICodexProModel(provider: string, modelId: string | 
 	);
 }
 
+export function usesOpenAICodexProviderEntitlement(provider: string, modelId: string | undefined): boolean {
+	return provider === "openai-codex" && modelId?.toLowerCase() === "gpt-5.6-sol";
+}
+
 export function isOpenAICodexChatGPTEntitlementError(message: string | undefined, code?: string): boolean {
 	return (
 		/\bnot supported when using codex with a chatgpt account\b/i.test(message ?? "") &&
