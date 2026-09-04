@@ -2,9 +2,10 @@
  * Model entitlement facts shared by Codex credential selection and provider
  * error presentation.
  *
- * GPT-5.6 Sol is a Pro-tier ChatGPT Codex model. The usage endpoint is the
- * authority for the account tier; this module only names the model policy and
- * keeps the provider's deterministic rejection wording in one place.
+ * Live provider entitlement is authoritative for model access: local usage
+ * planType is a ranking hint only and never denies a request before transport.
+ * This module only names the model policy and keeps the provider's
+ * deterministic rejection wording in one place.
  */
 
 export function requiresOpenAICodexProModel(provider: string, modelId: string | undefined): boolean {
@@ -13,10 +14,6 @@ export function requiresOpenAICodexProModel(provider: string, modelId: string | 
 		typeof modelId === "string" &&
 		(modelId.toLowerCase().includes("-spark") || modelId.toLowerCase() === "gpt-5.6-sol")
 	);
-}
-
-export function requiresStrictOpenAICodexProModel(provider: string, modelId: string | undefined): boolean {
-	return provider === "openai-codex" && modelId?.toLowerCase() === "gpt-5.6-sol";
 }
 
 export function isOpenAICodexChatGPTEntitlementError(message: string | undefined, code?: string): boolean {

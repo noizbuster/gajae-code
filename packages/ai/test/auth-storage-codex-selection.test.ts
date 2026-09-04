@@ -371,7 +371,7 @@ describe("AuthStorage codex oauth ranking", () => {
 		expect(apiKey?.startsWith("api-acct-plus-")).toBe(true);
 	});
 
-	test("rejects GPT-5.6 Sol for a known non-Pro ChatGPT account", async () => {
+	test("allows GPT-5.6 Sol for a Plus-labelled ChatGPT account and defers to provider entitlement", async () => {
 		if (!authStorage) throw new Error("test setup failed");
 
 		await authStorage.set("openai-codex", [{ type: "oauth", ...createCredential("acct-plus", "plus@example.com") }]);
@@ -383,10 +383,8 @@ describe("AuthStorage codex oauth ranking", () => {
 		plusReport.metadata = { ...plusReport.metadata, planType: "plus" };
 		usageByAccount.set("acct-plus", plusReport);
 
-		await expect(
-			authStorage.getApiKey("openai-codex", "session-sol-plus", { modelId: "gpt-5.6-sol" }),
-		).rejects.toThrow(
-			'This ChatGPT Codex account cannot use model "gpt-5.6-sol". Select a model available to this ChatGPT account',
+		await expect(authStorage.getApiKey("openai-codex", "session-sol-plus", { modelId: "gpt-5.6-sol" })).resolves.toBe(
+			"api-acct-plus",
 		);
 	});
 
@@ -437,7 +435,7 @@ describe("AuthStorage codex oauth ranking", () => {
 		).resolves.toBe("api-acct-unknown");
 	});
 
-	test("does not apply the ChatGPT entitlement gate to an API-key credential", async () => {
+	test("allows GPT-5.6 Sol on an API-key credential without consulting usage planType", async () => {
 		if (!authStorage) throw new Error("test setup failed");
 
 		await authStorage.set("openai-codex", { type: "api_key", key: "api-key-credential" });

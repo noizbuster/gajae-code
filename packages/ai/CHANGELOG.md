@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- OpenAI Codex GPT-5.6 Sol credential selection no longer treats the local ChatGPT usage `planType` label as an authoritative entitlement denial. Plus-labelled, unknown, and grandfathered accounts may reach the provider, while confirmed Pro accounts remain preferred and provider-confirmed HTTP or streaming entitlement failures retain actionable model/account guidance.
+
 - Cursor payload hooks now receive protobuf requests as JSON-safe values, await asynchronous inspection or replacement, and validate replacement payloads before transport. Checkpoint state containing 64-bit protobuf fields no longer makes hook-side `JSON.stringify` fail on JavaScript `bigint` values.
 
 ## [0.16.3] - 2026-09-04

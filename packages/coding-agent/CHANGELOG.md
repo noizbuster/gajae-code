@@ -3,6 +3,8 @@
 ## [Unreleased]
 ### Fixed
 
+- Primary model binding no longer rejects GPT-5.6 Sol solely because the selected OpenAI Codex OAuth account is locally labelled Plus. Binding succeeds and live provider entitlement remains authoritative, while genuine provider rejections still surface the existing actionable guidance.
+
 - The status-line usage segment now paints only the active model's provider, so switching to Grok no longer keeps a stale Claude 5h/7d pair. Canonical Grok Build reports render only their authoritative weekly window, while monthly credits are omitted instead of being mislabeled as `7d`.
 
 - Moving the `/model` preset cursor now reuses the authentication snapshot produced by catalog and credential refreshes instead of resolving every profile against the full model catalog on each Up/Down keypress; auth-dependent preset actions remain blocked until the initial static refresh and the availability snapshot are complete.
