@@ -1550,7 +1550,7 @@ export class ExtensionRunner {
 
 	async emitContext(messages: AgentMessage[], scope?: AttemptScopeRef): Promise<AgentMessage[]> {
 		const functionDispatch = await this.emitFunctionHooks({ type: "context", messages });
-		if (functionDispatch.action === "deny") return messages;
+		if (functionDispatch.action === "deny") throw new Error(functionDispatch.reason);
 		if (functionDispatch.action === "return") return functionDispatch.value as AgentMessage[];
 		const transformedMessages = functionDispatch.event.messages;
 		const handlers = this.#legacyHandlers("context");
@@ -1659,7 +1659,7 @@ export class ExtensionRunner {
 			images,
 			systemPrompt,
 		});
-		if (functionDispatch.action === "deny") return undefined;
+		if (functionDispatch.action === "deny") throw new Error(functionDispatch.reason);
 		if (functionDispatch.action === "return") return functionDispatch.value as BeforeAgentStartCombinedResult;
 		const handlers = this.#legacyHandlers("before_agent_start");
 		if (handlers.length === 0) return undefined;
