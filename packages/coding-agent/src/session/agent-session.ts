@@ -6165,6 +6165,7 @@ export class AgentSession {
 		observation: CoordinatorToolObservation | undefined,
 		propagateFailure: boolean,
 	): Promise<void> {
+		if (context.stateFile === null) return;
 		try {
 			await persistCoordinatorRuntimeStateFromEvent(event, context, observation);
 		} catch (error) {
