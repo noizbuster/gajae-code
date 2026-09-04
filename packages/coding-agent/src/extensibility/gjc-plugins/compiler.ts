@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { parseFrontmatter, pathIsWithin } from "@gajae-code/utils";
-import { readSchemaDeclaration, schemaHash } from "./metadata";
+import { functionHookGrantHash, normalizeFunctionHookGrant } from "../extensions/function-hooks";
+import { canonicalJson, readSchemaDeclaration, schemaHash } from "./metadata";
 import { resolveWithinRoot } from "./paths";
 import { parseManifest, parseSubskillFrontmatter } from "./schema";
 import {
@@ -79,7 +80,7 @@ async function resolveDeclaredFile(pluginRoot: string, rel: string): Promise<str
 	if (!pathIsWithin(realRoot, real)) {
 		throw new GjcPluginLoadError("security_policy", `GJC plugin file escapes root via symlink: ${rel}`);
 	}
-	return resolved;
+	return real;
 }
 
 async function hashFile(
@@ -103,7 +104,7 @@ async function hashFile(
 }
 
 function mcpConfigHash(entry: GjcPluginMcpManifestEntry): string {
-	const canonical = JSON.stringify({
+	const canonical = canonicalJson({
 		name: entry.name,
 		transport: entry.transport,
 		command: entry.command ?? null,
@@ -161,14 +162,6 @@ export async function compileGjcPluginBundle(root: string): Promise<NormalizedGj
 	const manifest = parseManifest(await readManifestJson(manifestPath), manifestPath);
 
 	const files = new Map<string, { sha256: string; bytes: number }>();
-	const manifestSubskillTools = manifest.tools.filter(tool => tool.surface === "subskill");
-	const manifestSubskillFiles = new Map<string, { name: string; sha256: string }>();
-	for (const tool of manifestSubskillTools) {
-		const abs = await resolveDeclaredFile(pluginRoot, tool.path);
-		const { sha256: digest, bytes } = await hashFile(abs, tool.path, tool.sha256);
-		files.set(tool.path, { sha256: digest, bytes });
-		manifestSubskillFiles.set(tool.path, { name: tool.name, sha256: digest });
-	}
 
 	const subskills: NormalizedSubskillSurface[] = [];
 	for (const rel of manifest.subskills) {
@@ -204,12 +197,6 @@ export async function compileGjcPluginBundle(root: string): Promise<NormalizedGj
 					: [];
 		const toolRefs: NormalizedSubskillToolSurface[] = [];
 		const seenToolRefs = new Set<string>();
-		for (const [toolRel, info] of manifestSubskillFiles) {
-			const extensionId = surfaceIds.subskillTool(fm.binds_to, fm.phase, fm.activation_arg, toolRel);
-			if (seenToolRefs.has(extensionId)) continue;
-			seenToolRefs.add(extensionId);
-			toolRefs.push({ extensionId, relativePath: toolRel, implementationHash: info.sha256 });
-		}
 		for (const toolRel of fmToolPaths) {
 			if (toolRel.trim().length === 0) continue;
 			const toolAbs = await resolveDeclaredFile(pluginRoot, toolRel);
@@ -295,6 +282,11 @@ export async function compileGjcPluginBundle(root: string): Promise<NormalizedGj
 				`GJC plugin hook "${hook.name}": tool_result requires the after phase`,
 			);
 		}
+		const grant = normalizeFunctionHookGrant({
+			capabilities: hook.capabilities,
+			networkDestinations: hook.networkDestinations,
+			filesystemRoots: hook.filesystemRoots,
+		});
 		hooks.push({
 			extensionId: surfaceIds.hook(hook.event, hook.phase, hook.target, hook.name),
 			name: hook.name,
@@ -304,6 +296,14 @@ export async function compileGjcPluginBundle(root: string): Promise<NormalizedGj
 			relativePath: hook.path,
 			sha256: digest,
 			implementationHash: digest,
+			capabilities: [...grant.capabilities],
+			networkDestinations: [...grant.networkDestinations],
+			filesystemRoots: [...grant.filesystemRoots],
+			capabilityHash: functionHookGrantHash(grant),
+			functionHook:
+				hook.capabilities !== undefined ||
+				hook.networkDestinations !== undefined ||
+				hook.filesystemRoots !== undefined,
 		});
 	}
 
